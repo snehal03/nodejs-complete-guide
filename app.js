@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const es6Renderer = require('express-es6-template-engine');
 
 const adminRoutes= require('./routes/admin');
 const shopRoutes = require('./routes/shop');
