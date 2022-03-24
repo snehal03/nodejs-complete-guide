@@ -21,7 +21,7 @@ exports.postAddProducts = (req, res) => {
   const product = new Product(null, title, imageUrl, description, price);
   product.save();
   // products.push({title: req.body.title})
-  res.redirect("products");
+  return res.redirect("products");
 };
 
 exports.getEditProduct = (req, res) => {
@@ -58,7 +58,7 @@ exports.postEditProducts = (req, res) => {
     price
   );
   updatedProduct.save();
-  res.redirect("products");
+  return res.redirect("products");
 };
 
 exports.getProducts = (req, res) => {
@@ -76,6 +76,6 @@ exports.postDeleteProducts = (req, res) => {
   const productId = req.body.productId;
   Product.findById(productId, (product) => {
     Product.deletById(productId, product.price);
-    res.redirect("products");
+    return res.redirect("products");
   });
 };
