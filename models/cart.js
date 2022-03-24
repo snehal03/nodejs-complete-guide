@@ -8,7 +8,7 @@ const p = path.join(
 );
 
 module.exports = class Cart {
-  static AddProduct(id, productPrice) {
+  static AddProduct(_id, productPrice) {
     // fetch the previous cart
     fs.readFile(p, (err, data) => {
       let cart = { products: [], totalPrice: 0 };
@@ -17,7 +17,7 @@ module.exports = class Cart {
       }
       // Find existing product
       const existingProductIndex = cart.products.findIndex(
-        (prod) => prod.id === id
+        (prod) => prod._id === _id
       );
       const existingProduct = cart.products[existingProductIndex];
 
@@ -28,7 +28,7 @@ module.exports = class Cart {
         cart.products = [...cart.products];
         cart.products[existingProductIndex] = updatedProduct;
       } else {
-        updatedProduct = { id: id, qty: 1 };
+        updatedProduct = { _id: _id, qty: 1 };
         cart.products = [...cart.products, updatedProduct];
       }
       cart.totalPrice = cart.totalPrice + +productPrice;
@@ -38,19 +38,19 @@ module.exports = class Cart {
     });
   }
 
-  static deleteProduct(id, productPrice) {
+  static deleteProduct(_id, productPrice) {
     fs.readFile(p, (err, fileData) => {
       if (err) {
         return;
       }
       const updatedCart = { ...JSON.parse(fileData) };
-      const product = updatedCart.products.find((prod) => prod.id === id);
+      const product = updatedCart.products.find((prod) => prod._id === _id);
       if (!product) {
         return;
       }
       const productQty = product.qty;
       updatedCart.products = updatedCart.products.filter(
-        (prod) => prod.id !== id
+        (prod) => prod._id !== _id
       );
       updatedCart.totalPrice =
         updatedCart.totalPrice - productPrice * productQty;
