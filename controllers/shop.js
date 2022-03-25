@@ -67,15 +67,6 @@ exports.getCheckout = (req, res, next) => {
   });
 };
 
-exports.getOrders = (req, res, next) => {
-  res.render("shop/orders", {
-    pageTitle: "Orders",
-    path: "/orders",
-    isAuthenticated: req.session.isLoggedIn,
-    orders: []
-  });
-};
-
 exports.getProduct = (req, res, next) => {
   const productId = req.params.productId;
   Product.findById(productId, (product) => {
@@ -96,5 +87,63 @@ exports.postCartDeleteProducts = (req, res) => {
 
 
 exports.postOrder = (req, res, next) => {
+  Cart.saveOrder();
   return res.redirect('/orders');
+};
+
+
+exports.getOrders = (req, res, next) => {
+
+  Cart.getOrders((cart) => {
+    Product.fetchAll((products) => {
+      const prods = [];
+     
+      for (product of products) {
+        const cartProduct = cart.products.find(
+          (prod) => prod._id === product._id
+        );
+        if (cartProduct) {
+          prods.push({ product: product, qty: cartProduct.qty });
+        }
+      }
+      order = {
+        _id: cart._id,
+        products : prods
+      };
+
+      res.render("shop/orders", {
+        pageTitle: "Orders",
+        path: "/orders",
+        isAuthenticated: req.session.isLoggedIn,
+        order: order
+      });
+    });
+  });
+
+};
+
+exports.getInvoice = (req, res, next) => {
+  Cart.getOrders((cart) => {
+    Product.fetchAll((products) => {
+      const prods = [];
+      let totalSum = 0;
+     
+      for (product of products) {
+        const cartProduct = cart.products.find(
+          (prod) => prod._id === product._id
+        );
+        if (cartProduct) {
+          totalSum = totalSum + (Number(cartProduct.qty) * Number(product.price));
+          prods.push({ product: product, qty: cartProduct.qty });
+        }
+      }
+      res.render("shop/checkout", {
+        pageTitle: "Checkout",
+        path: "/checkout",
+        products: prods,
+        totalSum: totalSum,
+        isAuthenticated : req.session.isLoggedIn
+      });
+    });
+  });
 };

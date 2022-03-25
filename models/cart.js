@@ -7,6 +7,13 @@ const p = path.join(
   "cart.json"
 );
 
+const order= path.join(
+  path.dirname(process.mainModule.filename),
+  "data",
+  "orders.json"
+);
+
+
 module.exports = class Cart {
   static AddProduct(_id, productPrice) {
     // fetch the previous cart
@@ -62,6 +69,29 @@ module.exports = class Cart {
 
   static getCart(cb) {
     fs.readFile(p, (err, data) => {
+      if (err) {
+        return cb([]);
+      }
+      cb(JSON.parse(data));
+    });
+  }
+
+  /**
+   * Order 
+   */
+  static saveOrder() {
+    fs.readFile(p, (err, fileData) => {
+      if(!err){
+        const data =  {...JSON.parse(fileData), _id: Math.random() };
+        fs.writeFile(order, JSON.stringify(data), (err) => {
+          console.log(err);
+        });
+      }
+    });
+  }
+
+  static getOrders(cb) {
+    fs.readFile(order, (err, data) => {
       if (err) {
         return cb([]);
       }

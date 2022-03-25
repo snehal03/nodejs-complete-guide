@@ -17,6 +17,9 @@ const getUsersFromFile = (cb) => {
 };
 
 module.exports = class User {
+  resetToken;
+  resetTokenExpiration;
+  
   constructor(_id, email, password) {
     this._id = _id;
     this.email = email;
@@ -24,10 +27,13 @@ module.exports = class User {
   }
   save() {
     getUsersFromFile((users) => {
+        const user = users.find(
+          (user) => user.email === this.email
+        );
+      if (user) {
         const existingUserIndex = users.findIndex(
           (user) => user.email === this.email
         );
-      if (existingUserIndex) {
         const updatedUsers = [...users];
         updatedUsers[existingUserIndex] = this;
         fs.writeFile(p, JSON.stringify(updatedUsers), (err) => {

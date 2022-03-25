@@ -1,8 +1,17 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
+const sendgridTransport = require('nodemailer-sendgrid-transport');
+
 const User = require('../models/user');
 
+const transporter = nodemailer.createTransport(sendgridTransport({
+    auth: {
+        api_key: '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'
+    }
+}));
+
 exports.getLogin = (req, res, next) => {
-    // console.log("********req.session",req.session)
     let message = req.flash('error');
     if (message.length > 0) {
       message = message[0];
@@ -76,6 +85,12 @@ exports.postSignup = (req, res, next) => {
         bcrypt.hash(password, 12).then((hashedPass)=>{
             const user = new User(null,email, hashedPass);
             user.save();
+            transporter.sendMail({
+                to: email,
+                from: 'snehaldhane03@gmail.com',
+                subject: 'Signup Successfully',
+                message: '<h1>You have signed up successfully</h1>'
+            })
             return res.redirect('/login');
         }) 
 
@@ -86,3 +101,44 @@ exports.postSignup = (req, res, next) => {
    
 };
 
+
+exports.getReset = (req, res, next) => {
+    let message = req.flash('error');
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
+    res.render('auth/reset', {
+      path: '/reset',
+      pageTitle: 'Reset Password',
+      errorMessage: message
+    });
+  };
+
+exports.postReset = (req, res, next) => {
+    crypto.randomBytes(32,(err,buffer)=>{
+        if(err) {
+            return res.redirect('/reset');
+        }
+        const token = buffer.toString('hex');
+        User.findByEmail(req.body.email,(user)=>{
+            if(!user){
+                return res.redirect('/reset');
+            }
+            /* const u = new User(user._id, req.body.email , user.password );
+            u.resetToken = token ;
+            u.resetTokenExpiration = Date.now() +  3600000 ;
+            u.save(); */
+            transporter.sendMail({
+                to: req.body.email,
+                from: 'snehaldhane03@gmail.com',
+                subject: 'Password Reset',
+                message: `<p>Your Password reset link </p>
+                <p>Click here <a href="http://localhost:3000/reset/${token}">link</a> to reset password</p>
+                `
+            })
+            return res.redirect('/login')
+        });
+    })
+};
