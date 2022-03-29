@@ -4,7 +4,9 @@
   "description": "complete nodejs guide",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "PORT=3000 SESSION_SECRETE_KEY='my secret' PUBLIC_DIR=public MAIL_KEY='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' node app.js",
+    "start-server": "node app.js",
+    "start-dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Snehal Sabale",
@@ -12,6 +14,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.2",
+    "compression": "^1.7.4",
     "connect-flash": "^0.1.1",
     "csurf": "^1.11.0",
     "ejs": "^3.1.6",
@@ -19,6 +22,8 @@
     "express-es6-template-engine": "^2.2.3",
     "express-handlebars": "^6.0.3",
     "express-session": "^1.17.2",
+    "helmet": "^5.0.2",
+    "morgan": "^1.10.0",
     "nodemailer": "^6.7.3",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "pug": "^3.0.2"

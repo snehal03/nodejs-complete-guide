@@ -1,0 +1,8 @@
+{
+    "env" :{
+        "PORT" : 3000,
+        "SESSION_SECRETE_KEY": "my secret",
+        "PUBLIC_DIR": "public",
+        "MAIL_KEY":"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"
+    }
+}
