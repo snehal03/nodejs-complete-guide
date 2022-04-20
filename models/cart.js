@@ -1,101 +1,94 @@
-const fs = require("fs");
-const path = require("path");
+const getDb = require("../util/database").getDb;
+var ObjectId = require("mongodb").ObjectId;
 
-const p = path.join(
-  path.dirname(process.mainModule.filename),
-  "data",
-  "cart.json"
-);
+class cart {
+  constructor(_id, orderId, userId, productPrice) {
+    this._id = _id;
+    this.orderId = orderId;
+    this.userId = userId;
+    this.productPrice = productPrice;
+  }
 
-const order= path.join(
-  path.dirname(process.mainModule.filename),
-  "data",
-  "orders.json"
-);
+  AddProduct() {
+    const db = getDb();
+    cart.getCartByUserId(this.userId, (result) => {
+       const cart = result;
+      if (cart) {
+        const cartItems = [...cart.products];
+        const index = cartItems.findIndex(
+          (product) => product.id.toString() === this.orderId.toString()
+        );
+        if (index >= 0) {
+            cart.products[index].qty = cartItems[index].qty + 1;
+        } else {
+            cart.products.push({
+            id: ObjectId(this.orderId),
+            qty: 1,
+          });
+        }
+        cart.totalPrice = Number(cart.totalPrice) + Number(this.productPrice),
 
-
-module.exports = class Cart {
-  static AddProduct(_id, productPrice) {
-    // fetch the previous cart
-    fs.readFile(p, (err, data) => {
-      let cart = { products: [], totalPrice: 0 };
-      if (!err) {
-        cart = JSON.parse(data);
-      }
-      // Find existing product
-      const existingProductIndex = cart.products.findIndex(
-        (prod) => prod._id === _id
-      );
-      const existingProduct = cart.products[existingProductIndex];
-
-      let updatedProduct;
-      if (existingProduct) {
-        updatedProduct = { ...existingProduct };
-        updatedProduct.qty = updatedProduct.qty + 1;
-        cart.products = [...cart.products];
-        cart.products[existingProductIndex] = updatedProduct;
+        db.collection('cart').updateOne({_id: ObjectId(result._id)} , {$set:  cart })
+        .then(result => console.log(result))
+        .catch(err => console.log(err))
       } else {
-        updatedProduct = { _id: _id, qty: 1 };
-        cart.products = [...cart.products, updatedProduct];
+        const cart = {
+          products: [
+            {id: ObjectId(this.orderId),
+            qty: 1}
+          ],
+          totalPrice: Number(this.productPrice),
+          userId: ObjectId(this.userId),
+        };
+        
+        db.collection("cart")
+          .insertOne(cart)
+          .then((result) => console.log(result))
+          .catch((err) => console.log(err));
       }
-      cart.totalPrice = cart.totalPrice + +productPrice;
-      fs.writeFile(p, JSON.stringify(cart), (err) => {
-        console.log(err);
-      });
     });
   }
 
-  static deleteProduct(_id, productPrice) {
-    fs.readFile(p, (err, fileData) => {
-      if (err) {
-        return;
-      }
-      const updatedCart = { ...JSON.parse(fileData) };
-      const product = updatedCart.products.find((prod) => prod._id === _id);
+  static getCartByUserId(userId, cb) {
+    const db = getDb();
+    db.collection("cart")
+      .find({ userId: ObjectId(userId) })
+      .next()
+      .then((result) => {
+        cb(result);
+      })
+      .catch((err) => console.log(err));
+  }
+  
+  static deleteProduct(_id, productPrice , userId) {
+    cart.getCartByUserId(userId, (result) => {
+ 
+      const updatedCart = result;
+      const product = updatedCart.products.find((prod) => prod.id.toString() === _id.toString());
       if (!product) {
         return;
       }
       const productQty = product.qty;
       updatedCart.products = updatedCart.products.filter(
-        (prod) => prod._id !== _id
+        (prod) => prod.id.toString() !== _id.toString()
       );
       updatedCart.totalPrice =
         updatedCart.totalPrice - productPrice * productQty;
-      fs.writeFile(p, JSON.stringify(updatedCart), (err) => {
-        console.log(err);
-      });
+        db.collection('cart').updateOne({_id: ObjectId(result._id)} , {$set:  cart })
+        .then(result => console.log(result))
+        .catch(err => console.log(err))
     });
   }
 
   static getCart(cb) {
-    fs.readFile(p, (err, data) => {
-      if (err) {
-        return cb([]);
-      }
-      cb(JSON.parse(data));
-    });
+    const db =  getDb();
+    return db.collection('cart').find().toArray().then(users =>{
+        return cb(users);
+    })
+    .catch(err => console.log(err))
   }
 
-  /**
-   * Order 
-   */
-  static saveOrder() {
-    fs.readFile(p, (err, fileData) => {
-      if(!err){
-        const data =  {...JSON.parse(fileData), _id: Math.random() };
-        fs.writeFile(order, JSON.stringify(data), (err) => {
-          console.log(err);
-        });
-      }
-    });
-  }
 
-  static getOrders(cb) {
-    fs.readFile(order, (err, data) => {
-      if (err) {
-        return cb([]);
-      }
-      cb(JSON.parse(data));
-    });
-  }
-};
+}
+
+module.exports = cart;

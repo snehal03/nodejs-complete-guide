@@ -14,6 +14,7 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const errorController = require('./controllers/error');
 const authRoutes = require('./routes/auth');
+const mongoConnect = require('./util/database').mongoConnect;
 
 
 const accessLogStream = fs.createWriteStream(
@@ -39,7 +40,7 @@ app.use(session({secret: process.env.SESSION_SECRETE_KEY , resave:false, saveUni
 /**
  * checks every post request for csrf token
  */
-app.use(csrfProtection); // use after session
+// app.use(csrfProtection); // use after session
 app.use(flash());
 
 /**
@@ -48,7 +49,7 @@ app.use(flash());
  */
 app.use((req,res,next)=> {
     res.locals.isAuthenticated = req.isLoggedIn;
-    res.locals.csrfToken = req.csrfToken();
+    // res.locals.csrfToken = req.csrfToken();
     next();
 });
 
@@ -65,4 +66,6 @@ app.use(helmet()); // used to set secure headers
 app.use(compression()); // compress the resources
 
 
-app.listen(process.env.PORT || 3000);
+mongoConnect(()=>{
+    app.listen(process.env.PORT || 3000);
+})

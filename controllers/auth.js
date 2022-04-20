@@ -83,14 +83,14 @@ exports.postSignup = (req, res, next) => {
     if(password === confirmPassword){
         // encrypt the password
         bcrypt.hash(password, 12).then((hashedPass)=>{
-            const user = new User(null,email, hashedPass);
+            const user = new User(email, hashedPass);
             user.save();
-            transporter.sendMail({
+           /*  transporter.sendMail({
                 to: email,
                 from: 'snehaldhane03@gmail.com',
                 subject: 'Signup Successfully',
                 message: '<h1>You have signed up successfully</h1>'
-            })
+            }) */
             return res.redirect('/login');
         }) 
 
@@ -130,14 +130,14 @@ exports.postReset = (req, res, next) => {
             u.resetToken = token ;
             u.resetTokenExpiration = Date.now() +  3600000 ;
             u.save(); */
-            transporter.sendMail({
+          /*   transporter.sendMail({
                 to: req.body.email,
                 from: 'snehaldhane03@gmail.com',
                 subject: 'Password Reset',
                 message: `<p>Your Password reset link </p>
                 <p>Click here <a href="http://localhost:3000/reset/${token}">link</a> to reset password</p>
                 `
-            })
+            }) */
             return res.redirect('/login')
         });
     })

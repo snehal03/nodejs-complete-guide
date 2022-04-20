@@ -1,75 +1,52 @@
-const fs = require("fs");
-const path = require("path");
+const { getDb } = require("../util/database");
 
-const p = path.join(
-  path.dirname(process.mainModule.filename),
-  "data",
-  "users.json"
-);
-
-const getUsersFromFile = (cb) => {
-  fs.readFile(p, (err, data) => {
-    if (err) {
-      return cb([]);
-    }
-    cb(JSON.parse(data));
-  });
-};
-
-module.exports = class User {
-  resetToken;
-  resetTokenExpiration;
-  
-  constructor(_id, email, password) {
-    this._id = _id;
+class User {
+//   resetToken;
+//   resetTokenExpiration;
+  constructor( email, password) {
     this.email = email;
     this.password = password;
   }
+
   save() {
-    getUsersFromFile((users) => {
-        const user = users.find(
-          (user) => user.email === this.email
-        );
-      if (user) {
-        const existingUserIndex = users.findIndex(
-          (user) => user.email === this.email
-        );
-        const updatedUsers = [...users];
-        updatedUsers[existingUserIndex] = this;
-        fs.writeFile(p, JSON.stringify(updatedUsers), (err) => {
-          console.log(err);
-        });
-      } else {
-        this._id = Math.random().toString();
-        users.push(this);
-        fs.writeFile(p, JSON.stringify(users), (err) => {
-          console.log(err);
-        });
-      }
-    });
+     User.findByEmail(this.email,(result)=>{
+        const userFound = result;
+        if(!userFound) {
+            const db =  getDb();
+            db.collection('users').insertOne(this)
+           .then(result => console.log(result))
+           .catch(err => console.log(err))
+        }else{
+            throw 'User already exists'
+        }
+     });
+
   }
 
   static fetchAll(cb) {
-    getUsersFromFile(cb);
+    const db =  getDb();
+    return db.collection('users').find().toArray().then(users =>{
+        return users;
+    })
+    .catch(err => console.log(err))
   }
 
   static deletById(_id) {
-    getUsersFromFile((users) => {
-    //   const user = users.filter((p) => p._id === _id);
-      const updatedUsers = users.filter((p) => p._id !== _id);
-      fs.writeFile(p, JSON.stringify(updatedUsers), (err) => {
-     /*    if (!err) {
-          Cart.deleteUser(_id, product.price);
-        } */
-      });
-    });
+    const db =  getDb();
+    db.collection('users').deleteOne({_id: ObjectId(_id)}).then(result => {
+      console.log(result)
+    })
+    .catch(err => console.log(err))
   }
 
   static findByEmail(email, cb) {
-    getUsersFromFile((users) => {
-      const user = users.find((p) => p.email === email);
-      cb(user);
-    });
+    const db =  getDb();
+    db.collection('users').findOne({email: email}).then(result => {
+        cb(result);
+    })
+    .catch(err => console.log(err))
   }
 
 }
+
+module.exports = User;

@@ -1,5 +1,6 @@
 const Cart = require("../models/cart");
 const Product = require("../models/product");
+const { ObjectId } = require("mongodb");
 
 exports.getProducts = (req, res, next) => {
   Product.fetchAll((products) => {
@@ -24,22 +25,25 @@ exports.getIndex = (req, res, next) => {
       pageTitle: "Shop",
       path: "/",
       isAuthenticated: req.session.isLoggedIn,
-      csrfToken: req.csrfToken()
+      // csrfToken: req.csrfToken()
     });
   });
 };
 
 exports.getCart = (req, res, next) => {
-  Cart.getCart((cart) => {
+  Cart.getCartByUserId(req.session.user._id, (cart) => {
     Product.fetchAll((products) => {
       const cartProducts = [];
       for (product of products) {
-        const cartProduct = cart.products.find(
-          (prod) => prod._id === product._id
-        );
-        if (cartProduct) {
-          cartProducts.push({ productData: product, qty: cartProduct.qty });
+        if(cart && cart.products.length ) {
+          const cartProduct =  cart.products.find(
+            (prod) => prod.id.toString() === product._id.toString()
+          );
+          if (cartProduct) {
+            cartProducts.push({ productData: product, qty: cartProduct.qty });
+          }
         }
+       
       }
       res.render("shop/cart", {
         pageTitle: "Your Cart",
@@ -54,7 +58,14 @@ exports.getCart = (req, res, next) => {
 exports.postCart = (req, res, next) => {
   const productId = req.body.productId;
   Product.findById(productId, (product) => {
-    Cart.AddProduct(productId, product.price);
+    const cart = new Cart(
+      null,
+     new ObjectId(productId),
+     new ObjectId(req.session.user._id),
+     product.price
+    );
+    cart.AddProduct();
+    // Cart.AddProduct(null ,productId,req.session.user._id, product.price);
   });
   return res.redirect("/cart");
 };
@@ -81,8 +92,11 @@ exports.getProduct = (req, res, next) => {
 
 exports.postCartDeleteProducts = (req, res) => {
   const productId = req.body.productId;
-  Cart.deleteProduct(productId);
-  return res.redirect("cart");
+  Product.findById(productId, (product) => {
+    Cart.deleteProduct(productId,product.price ,req.session.user._id);
+    return res.redirect("cart");
+  });
+
 };
 
 
